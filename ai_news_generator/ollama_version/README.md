@@ -5,14 +5,14 @@ This project leverages CrewAI any local model hosted via ollama to build an AI n
 ## Installation and setup
 
 **Get API Keys**:
-- [Gnews API Key](https://gnews.io/)
+- [Tavily API Key](/https://www.tavily.com/)
 
 
 
 **Install Dependencies**:
 Ensure you have Python 3.11 or later installed.
    ```bash
-   pip install crewai crewai-tools langchain-ollama
+   pip install crewai crewai-tools langchain-ollama  tavily-python
    ```
 
 To run program :

@@ -1,67 +1,20 @@
 import os
 import streamlit as st
 from crewai import Agent, Task, Crew, LLM
-from crewai.tools import BaseTool
+from crewai_tools import TavilySearchTool
 from langchain_community.llms import Ollama
-import json
-import urllib.request
-from urllib.parse import quote_plus
+from langchain.tools import Tool
+
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-class GNewsTool(BaseTool):
-    name: str = "GNews Search Tool"
-    description: str = "A tool for performing real-time news searches using the GNews API. Use this to find the latest articles, headlines, and general web information on a specific query."
-
-    def _run(self, query: str) -> str:
-        # Check for placeholder key before running the tool
-        if os.getenv("GNEWS_API_KEY") == "YOUR_GNEWS_API_KEY":
-            return "GNews Search Error: API key is not set."
-
-        # Safely encode the query string for use in a URL
-        safe_query = quote_plus(query)
-
-        # Construct the URL dynamically (max=10 results)
-        url = f"https://gnews.io/api/v4/search?q={safe_query}&lang=en&max=5&apikey={os.getenv("GNEWS_API_KEY")}"
-
-        try:
-            # Use urllib.request to fetch the data
-            with urllib.request.urlopen(url) as response:
-                data = json.loads(response.read().decode("utf-8"))
-                articles = data.get("articles", [])
-
-            if not articles:
-                return f"No news articles found for the query: {query}"
-
-            # Format the news articles into a string the agent can easily read
-            results = []
-            for i, article in enumerate(articles):
-                results.append(
-                    f"Article {i+1}:\n"
-                    f"  Title: {article.get('title')}\n"
-                    f"  Description: {article.get('description', 'N/A')}\n"
-                    f"  Source: {article.get('source', {}).get('name', 'N/A')}\n"
-                    f"  URL: {article.get('url', 'N/A')}\n"
-                )
-
-            return "GNews Search Results:\n\n" + "\n".join(results)
-
-        except urllib.error.HTTPError as e:
-            # Handle API-specific errors
-            return f"GNews API Error (HTTP {e.code}): Could not retrieve results for '{query}'. Check API key and usage limits."
-        except Exception as e:
-            # Handle general errors
-            return f"An unexpected error occurred during GNews search for '{query}': {str(e)}"
-
-
-
 # Streamlit page config
 st.set_page_config(page_title="AI News Generator", page_icon="📰", layout="wide")
 
 # Title and description
-st.title(f"🤖 AI News Generator, powered by CrewAI and **{os.getenv('OLLAMA_MODEL_NAME')}**")
+st.title(f"🤖 AI News Generator, powered by CrewAI, Tavily Search and  **{os.getenv('OLLAMA_MODEL_NAME')}**")
 st.markdown("Generate comprehensive blog posts about any topic using AI agents.")
 
 # Sidebar
@@ -102,7 +55,7 @@ def generate_content(topic):
         temperature=temperature
     )
 
-    search_tool = GNewsTool()
+    search_tool = TavilySearchTool(max_results=5)
 
     # First Agent: Senior Research Analyst
     senior_research_analyst = Agent(
@@ -213,4 +166,4 @@ if generate_button:
 
 # Footer
 st.markdown("---")
-st.markdown(f"Built with CrewAI, Streamlit and powered by **{os.getenv('OLLAMA_MODEL_NAME')}**")
+st.markdown(f"Built with CrewAI, Streamlit and powered by Tavily Search and **{os.getenv('OLLAMA_MODEL_NAME')}**")
